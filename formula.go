@@ -25,7 +25,8 @@ func New(formula string) (*Formula, error) {
 
 // Func adds a function to be usable by the formula. This function allows any amount of input floats and one
 // output float. The paramCount passed indicates the amount of input floats are expected. If less than the
-// required paramCount arguments are passed, the function returns 0.
+// required paramCount arguments are passed to the function, 0 is returned, so that the function passed does
+// not need to check for the correct arg length.
 // Functions must be added to the formula before evaluating, and need only to be added once.
 func (formula *Formula) Func(name string, paramCount int, f func(args ...float64) float64) {
 	formula.parser.functions[name] = availableFunc{function: f, paramCount: paramCount}
