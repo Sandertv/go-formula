@@ -13,13 +13,13 @@ import (
 )
 
 func main() {
-	f, err := formula.New("17*x + pow(z*3, 3)")
+    f, err := formula.New("17*x + pow(z*3, 3)")
     if err != nil {
         log.Print(err)
         return
     }
-	x := formula.Var("x", 4.5)
-	z := formula.Var("z", 5)
+    x := formula.Var("x", 4.5)
+    z := formula.Var("z", 5)
     log.Printf("Formula output: %v", f.Eval(x, z))
 }
 ```
