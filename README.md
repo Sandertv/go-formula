@@ -4,6 +4,10 @@ A simple and fast formula parser and evaluator.
 ## Getting Started
 
 ### Usage
+Formulas may be parsed using the formula.New() function. The function returns a formula that may be evaluated
+an unlimited amount of times. Note that parsing formulas is generally heavier than evaluating them, so it is
+recommended to parse once and evaluate the same formula multiple times where applicable.
+
 ```go
 package main
 
