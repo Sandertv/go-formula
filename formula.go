@@ -39,19 +39,15 @@ func (formula *Formula) Func(name string, paramCount int, f func(args ...float64
 // to this method is considered zero.
 //
 // Some special math constants are automatically included. They are automatically defined unless over-ridden
-// by variables. These are: π, Pi, pi, PI, Φ, Phi, phi, PHI, e, E.
+// by variables. These are: π, pi, Φ, phi, e, E.
 func (formula *Formula) Eval(variables ...Variable) float64 {
 	// Add special constants
 	variableMap := vars{
 		"π":  math.Pi,
-		"Pi": math.Pi,
 		"pi": math.Pi,
-		"PI": math.Pi,
 
 		"Φ":   math.Phi,
-		"Phi": math.Phi,
 		"phi": math.Phi,
-		"PHI": math.Phi,
 
 		"e": math.E,
 		"E": math.E,
