@@ -15,6 +15,9 @@ type Formula struct {
 
 // New returns a new formula for a given string. The formula is parsed and may be evaluated if parsed
 // successfully. If not successful, an error is returned and the formula is nil.
+//
+// Most functions from the math package that return a single float64 are supported. The equivalent function
+// name is all lower-cased. Therefore RoundToEven becomes roundtoeven. See https://golang.org/pkg/math/.
 func New(formula string) (*Formula, error) {
 	p := &astParser{formula: formula, functions: make(map[string]availableFunc)}
 	eval, err := p.parse()
