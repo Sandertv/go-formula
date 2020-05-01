@@ -21,12 +21,30 @@ func ceil(params ...float64) float64 {
 
 // min ...
 func min(params ...float64) float64 {
-	return math.Min(params[0], params[1])
+	// Assume at least 2 args
+	var minVal float64
+	for i := range params {
+		if i == 0 {
+			minVal = params[i]
+		} else {
+			minVal = math.Min(params[i], minVal)
+		}
+	}
+	return minVal
 }
 
 // max ...
 func max(params ...float64) float64 {
-	return math.Max(params[0], params[1])
+	// Assume at least 2 args
+	var maxVal float64
+	for i := range params {
+		if i == 0 {
+			maxVal = params[i]
+		} else {
+			maxVal = math.Max(params[i], maxVal)
+		}
+	}
+	return maxVal
 }
 
 // abs ...
