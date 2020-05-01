@@ -1,6 +1,9 @@
 package formula
 
-import "fmt"
+import (
+	"fmt"
+	"math"
+)
 
 // Formula is a parsed formula that is ready to be evaluated. A formula may be re-used an unlimited amount of
 // times and is safe to be used from different goroutines concurrently.
@@ -34,8 +37,26 @@ func (formula *Formula) Func(name string, paramCount int, f func(args ...float64
 
 // Eval evaluates a formula using the variables passed. Any variable in the formula parsed that is not passed
 // to this method is considered zero.
+//
+// Some special math constants are automatically included. They are automatically defined unless over-ridden
+// by variables. These are: π, Pi, pi, PI, Φ, Phi, phi, PHI, e, E.
 func (formula *Formula) Eval(variables ...Variable) float64 {
-	variableMap := vars{}
+	// Add special constants
+	variableMap := vars{
+		"π":  math.Pi,
+		"Pi": math.Pi,
+		"pi": math.Pi,
+		"PI": math.Pi,
+
+		"Φ":   math.Phi,
+		"Phi": math.Phi,
+		"phi": math.Phi,
+		"PHI": math.Phi,
+
+		"e": math.E,
+		"E": math.E,
+	}
+
 	for _, variable := range variables {
 		variableMap[variable.name] = variable.value
 	}
