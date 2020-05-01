@@ -1,4 +1,4 @@
-# go-formula
+# go-formula [![GoDoc](http://godoc.org/github.com/Sandertv/go-formula?status.svg)](https://godoc.org/github.com/Sandertv/go-formula)
 A simple and fast formula parser and evaluator.
 
 ## Getting Started
