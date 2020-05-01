@@ -31,7 +31,7 @@ func New(formula string) (*Formula, error) {
 
 // Func adds a function to be usable by the formula. This function allows any amount of input floats and one
 // output float. The paramCount passed indicates the amount of input floats are expected. If less than the
-// required paramCount arguments are passed to the function, 0 is returned, so that the function passed does
+// required paramCount arguments are passed to the function, NaN is returned, so that the function passed does
 // not need to check for the correct arg length.
 // Functions must be added to the formula before evaluating, and need only to be added once.
 func (formula *Formula) Func(name string, paramCount int, f func(args ...float64) float64) {
@@ -39,7 +39,7 @@ func (formula *Formula) Func(name string, paramCount int, f func(args ...float64
 }
 
 // Eval evaluates a formula using the variables passed. Any variable in the formula parsed that is not passed
-// to this method is considered zero.
+// to this method is considered NaN, just like missing functions or functions with too few arguments passed.
 //
 // Some special math constants are automatically included. They are automatically defined unless over-ridden
 // by variables. These are: π, pi, Φ, phi, e, E.
