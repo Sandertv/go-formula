@@ -18,3 +18,31 @@ func TestFormula_Eval(t *testing.T) {
 		return
 	}
 }
+
+func TestSpecialConstants(t *testing.T) {
+	formula, err := New("π + z")
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	actual := formula.Eval(Var("z", 5))
+	expected := math.Pi + 5
+	if expected != actual {
+		t.Errorf("expected formula result and Go result to be equal: expected: %v, actual: %v", expected, actual)
+		return
+	}
+}
+
+func TestMinMax(t *testing.T) {
+	formula, err := New("min(1,2,3) + max(3,2,1)")
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	actual := formula.Eval()
+	expected := 4.0
+	if expected != actual {
+		t.Errorf("expected formula result and Go result to be equal: expected: %v, actual: %v", expected, actual)
+		return
+	}
+}
