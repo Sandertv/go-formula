@@ -51,6 +51,8 @@ func (formula *Formula) Eval(variables ...Variable) float64 {
 
 		"e": math.E,
 		"E": math.E,
+
+		"nan": math.NaN(),
 	}
 
 	for _, variable := range variables {
