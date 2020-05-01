@@ -166,7 +166,7 @@ func logb(params ...float64) float64 {
 
 // max ...
 func max(params ...float64) float64 {
-	// Assume at least 2 args
+	// Assume at least 1 args
 	var maxVal float64
 	for i := range params {
 		if i == 0 {
@@ -180,7 +180,7 @@ func max(params ...float64) float64 {
 
 // min ...
 func min(params ...float64) float64 {
-	// Assume at least 2 args
+	// Assume at least 1 args
 	var minVal float64
 	for i := range params {
 		if i == 0 {
