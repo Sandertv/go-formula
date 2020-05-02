@@ -1,4 +1,4 @@
-# go-formula [![GoDoc](http://godoc.org/github.com/Sandertv/go-formula?status.svg)](https://godoc.org/github.com/Sandertv/go-formula)
+# go-formula [![GoDoc](http://godoc.org/github.com/Sandertv/go-formula?status.svg)](https://godoc.org/github.com/Sandertv/go-formula/v2)
 A simple and fast formula parser and evaluator.
 
 ## Getting Started
@@ -29,4 +29,4 @@ func main() {
 ```
 
 ### Documentation
-https://godoc.org/github.com/Sandertv/go-formula
+https://godoc.org/github.com/Sandertv/go-formula/v2
