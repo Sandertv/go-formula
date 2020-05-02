@@ -3,5 +3,5 @@
 package formula
 
 func (formula *Formula) registerExtra() {
-	formula.Func("fma", 1, fma)
+	formula.Func("fma", 3, fma)
 }
