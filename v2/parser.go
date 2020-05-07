@@ -92,7 +92,7 @@ func (p *astParser) parseBinaryExpr(expr *ast.BinaryExpr) (eval func(vars vars) 
 		}
 	case token.REM:
 		eval = func(vars vars) float64 {
-			return float64(int(x(vars)) % int(y(vars)))
+			return math.Mod(x(vars), y(vars))
 		}
 	}
 	return
