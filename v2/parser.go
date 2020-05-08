@@ -94,6 +94,8 @@ func (p *astParser) parseBinaryExpr(expr *ast.BinaryExpr) (eval func(vars vars) 
 		eval = func(vars vars) float64 {
 			return math.Mod(x(vars), y(vars))
 		}
+	default:
+		return nil, fmt.Errorf("unknown mathematical operation '%v'", expr.Op)
 	}
 	return
 }
