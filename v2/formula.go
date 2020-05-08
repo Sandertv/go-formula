@@ -65,7 +65,6 @@ func (formula *Formula) Eval(variables ...Variable) float64 {
 	for _, variable := range variables {
 		variableMap[variable.name] = variable.value
 	}
-
 	return formula.evaluate(variableMap)
 }
 
