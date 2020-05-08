@@ -12,7 +12,7 @@ recommended to parse once and evaluate the same formula multiple times where app
 package main
 
 import (
-	"github.com/sandertv/go-formula"
+	"github.com/sandertv/go-formula/v2"
 	"log"
 )
 
