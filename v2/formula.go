@@ -1,7 +1,8 @@
 package formula
 
 import (
-	"fmt"
+	"errors"
+	"golang.org/x/xerrors"
 	"math"
 )
 
@@ -22,7 +23,10 @@ func New(formula string) (*Formula, error) {
 	p := &astParser{formula: formula, functions: make(map[string]availableFunc)}
 	eval, err := p.parse()
 	if err != nil {
-		return nil, fmt.Errorf("error parsing formula: %v", err)
+		return nil, xerrors.Errorf("error parsing formula: %w", err)
+	}
+	if eval == nil {
+		return nil, errors.New("error parsing formula")
 	}
 	f := &Formula{evaluate: eval, parser: p}
 	f.registerDefaults()
@@ -61,6 +65,7 @@ func (formula *Formula) Eval(variables ...Variable) float64 {
 	for _, variable := range variables {
 		variableMap[variable.name] = variable.value
 	}
+
 	return formula.evaluate(variableMap)
 }
 

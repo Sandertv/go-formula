@@ -1,6 +1,7 @@
 package formula
 
 import (
+	"errors"
 	"fmt"
 	"math"
 )
@@ -22,7 +23,10 @@ func New(formula string) (*Formula, error) {
 	p := &astParser{formula: formula, functions: make(map[string]availableFunc)}
 	eval, err := p.parse()
 	if err != nil {
-		return nil, fmt.Errorf("error parsing formula: %v", err)
+		return nil, fmt.Errorf("error parsing formula: %w", err)
+	}
+	if eval == nil {
+		return nil, errors.New("error parsing formula")
 	}
 	f := &Formula{evaluate: eval, parser: p}
 	f.registerDefaults()
