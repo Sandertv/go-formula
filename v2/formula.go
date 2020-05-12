@@ -47,6 +47,7 @@ func (formula *Formula) Eval(variables ...Variable) float64 {
 	// Add special constants
 	variableMap := vars{
 		"π":  math.Pi,
+		"𝜋":  math.Pi,
 		"pi": math.Pi,
 
 		"Φ":   math.Phi,
