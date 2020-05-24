@@ -11,7 +11,7 @@ func TestFormula_Eval(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	actual := formula.Eval(Var("x", 4.5), Var("z", 5))
+	actual := formula.MustEval(Var("x", 4.5), Var("z", 5))
 	expected := 1.0*2.0/3.0 + 4.0 - 5.0*(21.0*5.0+math.Pow(4.5*3.0, 3.0))
 	if expected != actual {
 		t.Errorf("expected formula result and Go result to be equal: expected: %v, actual: %v", expected, actual)
@@ -25,7 +25,7 @@ func TestSpecialConstants(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	actual := formula.Eval(Var("z", 5))
+	actual := formula.MustEval(Var("z", 5))
 	expected := math.Pi + 5
 	if expected != actual {
 		t.Errorf("expected formula result and Go result to be equal: expected: %v, actual: %v", expected, actual)
@@ -39,7 +39,7 @@ func TestMinMax(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	actual := formula.Eval()
+	actual := formula.MustEval()
 	expected := 4.0
 	if expected != actual {
 		t.Errorf("expected formula result and Go result to be equal: expected: %v, actual: %v", expected, actual)

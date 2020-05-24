@@ -24,7 +24,7 @@ func main() {
     }
     x := formula.Var("x", 4.5)
     z := formula.Var("z", 5)
-    log.Printf("Formula output: %v", f.Eval(x, z))
+    log.Printf("Formula output: %v", f.MustEval(x, z))
 }
 ```
 

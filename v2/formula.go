@@ -5,12 +5,12 @@ import (
 	"math"
 )
 
-// Formula is a parsed formula that is ready to be evaluated. A formula may be re-used an unlimited amount of
-// times and is safe to be used from different goroutines concurrently.
+// Formula is a parsed formula that is ready to be evaluated. It is safe to use concurrently from multiple
+// goroutines.
 type Formula struct {
 	parser *astParser
 	// evaluate is the function called when the formula is evaluated.
-	evaluate func(vars vars) float64
+	evaluate func(vars vars) (float64, error)
 }
 
 // New returns a new formula for a given string. The formula is parsed and may be evaluated if parsed
@@ -29,21 +29,32 @@ func New(formula string) (*Formula, error) {
 	return f, nil
 }
 
-// Func adds a function to be usable by the formula. This function allows any amount of input floats and one
-// output float. The paramCount passed indicates the amount of input floats are expected. If less than the
-// required paramCount arguments are passed to the function, NaN is returned, so that the function passed does
-// not need to check for the correct arg length.
-// Functions must be added to the formula before evaluating, and need only to be added once.
-func (formula *Formula) Func(name string, paramCount int, f func(args ...float64) float64) {
+// RegisterFunc registers a custom function to be usable by the formula. This function allows an arbitrary number of input
+// floats and one output float. The paramCount passed indicates the number of input floats expected. If less than the
+// required paramCount arguments are passed to the function, Eval will return an ErrInsufficientArgs error. The function
+// does not need to internally check the correct arg length. Functions must be registered with the formula before evaluating.
+//
+// Example:
+//
+//  // Add sinc function: https://en.wikipedia.org/wiki/Sinc_function
+//  RegisterFunc("sinc", 1, func(args ...float64) float64 {
+//     if args[0] == 0 {
+//        return 1
+//     }
+//     return math.Sin(args[0]) / args[0]
+//  }
+//
+func (formula *Formula) RegisterFunc(name string, paramCount int, f func(args ...float64) float64) {
 	formula.parser.functions[name] = availableFunc{function: f, paramCount: paramCount}
 }
 
-// Eval evaluates a formula using the variables passed. Any variable in the formula parsed that is not passed
-// to this method is considered NaN, just like missing functions or functions with too few arguments passed.
+// Eval evaluates a formula using the variables passed. If an unknown variable/constant or function is encountered,
+// ErrUnknownVariable or ErrUnknownFunc is returned respectively. If a known function is passed with too few arguments,
+// ErrInsufficientArgs is returned.
 //
-// Some special math constants are automatically included. They are automatically defined unless over-ridden
-// by variables. These are: π, pi, Φ, phi, e, E.
-func (formula *Formula) Eval(variables ...Variable) float64 {
+// Some special math constants are already included. They are automatically defined unless over-ridden
+// by variables. These are: π, 𝜋, pi, Φ, phi, e, E.
+func (formula *Formula) Eval(variables ...Variable) (float64, error) {
 	// Add special constants
 	variableMap := vars{
 		"π":  math.Pi,
@@ -65,59 +76,68 @@ func (formula *Formula) Eval(variables ...Variable) float64 {
 	return formula.evaluate(variableMap)
 }
 
+// MustEval calls Eval but panics if Eval returns an error.
+func (formula *Formula) MustEval(variables ...Variable) float64 {
+	f, err := formula.Eval(variables...)
+	if err != nil {
+		panic(err)
+	}
+	return f
+}
+
 // registerDefaults registers all functions found in the functions.go file to the formula. This is done for
 // each formula automatically, so these functions do not need to be added manually.
 func (formula *Formula) registerDefaults() {
-	formula.Func("abs", 1, abs)
-	formula.Func("acos", 1, acos)
-	formula.Func("acosh", 1, acosh)
-	formula.Func("asin", 1, asin)
-	formula.Func("asinh", 1, asinh)
-	formula.Func("atan", 1, atan)
-	formula.Func("atan2", 2, atan2)
-	formula.Func("atanh", 1, atanh)
-	formula.Func("cbrt", 1, cbrt)
-	formula.Func("ceil", 1, ceil)
-	formula.Func("copysign", 2, copysign)
-	formula.Func("cos", 1, cos)
-	formula.Func("cosh", 1, cosh)
-	formula.Func("dim", 2, dim)
-	formula.Func("erf", 1, erf)
-	formula.Func("erfc", 1, erfc)
-	formula.Func("erfcinv", 1, erfcinv)
-	formula.Func("erfinv", 1, erfinv)
-	formula.Func("exp", 1, exp)
-	formula.Func("exp2", 1, exp2)
-	formula.Func("expm1", 1, expm1)
-	formula.Func("floor", 1, floor)
-	formula.Func("gamma", 1, gamma)
-	formula.Func("hypot", 2, hypot)
-	formula.Func("j0", 1, j0)
-	formula.Func("j1", 1, j1)
-	formula.Func("jn", 2, jn)
-	formula.Func("log", 1, log)
-	formula.Func("log10", 1, log10)
-	formula.Func("log1p", 1, log1p)
-	formula.Func("log2", 1, log2)
-	formula.Func("logb", 1, logb)
-	formula.Func("max", 1, max)
-	formula.Func("min", 1, min)
-	formula.Func("mod", 2, mod)
-	formula.Func("nextafter", 2, nextafter)
-	formula.Func("pow", 2, pow)
-	formula.Func("pow10", 1, pow10)
-	formula.Func("remainder", 2, remainder)
-	formula.Func("round", 1, round)
-	formula.Func("roundtoeven", 1, roundtoeven)
-	formula.Func("sin", 1, sin)
-	formula.Func("sinh", 1, sinh)
-	formula.Func("sqrt", 1, sqrt)
-	formula.Func("tan", 1, tan)
-	formula.Func("tanh", 1, tanh)
-	formula.Func("trunc", 1, trunc)
-	formula.Func("y0", 1, y0)
-	formula.Func("y1", 1, y1)
-	formula.Func("yn", 1, yn)
+	formula.RegisterFunc("abs", 1, abs)
+	formula.RegisterFunc("acos", 1, acos)
+	formula.RegisterFunc("acosh", 1, acosh)
+	formula.RegisterFunc("asin", 1, asin)
+	formula.RegisterFunc("asinh", 1, asinh)
+	formula.RegisterFunc("atan", 1, atan)
+	formula.RegisterFunc("atan2", 2, atan2)
+	formula.RegisterFunc("atanh", 1, atanh)
+	formula.RegisterFunc("cbrt", 1, cbrt)
+	formula.RegisterFunc("ceil", 1, ceil)
+	formula.RegisterFunc("copysign", 2, copysign)
+	formula.RegisterFunc("cos", 1, cos)
+	formula.RegisterFunc("cosh", 1, cosh)
+	formula.RegisterFunc("dim", 2, dim)
+	formula.RegisterFunc("erf", 1, erf)
+	formula.RegisterFunc("erfc", 1, erfc)
+	formula.RegisterFunc("erfcinv", 1, erfcinv)
+	formula.RegisterFunc("erfinv", 1, erfinv)
+	formula.RegisterFunc("exp", 1, exp)
+	formula.RegisterFunc("exp2", 1, exp2)
+	formula.RegisterFunc("expm1", 1, expm1)
+	formula.RegisterFunc("floor", 1, floor)
+	formula.RegisterFunc("gamma", 1, gamma)
+	formula.RegisterFunc("hypot", 2, hypot)
+	formula.RegisterFunc("j0", 1, j0)
+	formula.RegisterFunc("j1", 1, j1)
+	formula.RegisterFunc("jn", 2, jn)
+	formula.RegisterFunc("log", 1, log)
+	formula.RegisterFunc("log10", 1, log10)
+	formula.RegisterFunc("log1p", 1, log1p)
+	formula.RegisterFunc("log2", 1, log2)
+	formula.RegisterFunc("logb", 1, logb)
+	formula.RegisterFunc("max", 1, max)
+	formula.RegisterFunc("min", 1, min)
+	formula.RegisterFunc("mod", 2, mod)
+	formula.RegisterFunc("nextafter", 2, nextafter)
+	formula.RegisterFunc("pow", 2, pow)
+	formula.RegisterFunc("pow10", 1, pow10)
+	formula.RegisterFunc("remainder", 2, remainder)
+	formula.RegisterFunc("round", 1, round)
+	formula.RegisterFunc("roundtoeven", 1, roundtoeven)
+	formula.RegisterFunc("sin", 1, sin)
+	formula.RegisterFunc("sinh", 1, sinh)
+	formula.RegisterFunc("sqrt", 1, sqrt)
+	formula.RegisterFunc("tan", 1, tan)
+	formula.RegisterFunc("tanh", 1, tanh)
+	formula.RegisterFunc("trunc", 1, trunc)
+	formula.RegisterFunc("y0", 1, y0)
+	formula.RegisterFunc("y1", 1, y1)
+	formula.RegisterFunc("yn", 1, yn)
 
 	formula.registerExtra()
 }
