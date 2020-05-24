@@ -42,7 +42,7 @@ func New(formula string) (*Formula, error) {
 //        return 1
 //     }
 //     return math.Sin(args[0]) / args[0]
-//  }
+//  })
 //
 func (formula *Formula) RegisterFunc(name string, paramCount int, f func(args ...float64) float64) {
 	formula.parser.functions[name] = availableFunc{function: f, paramCount: paramCount}
