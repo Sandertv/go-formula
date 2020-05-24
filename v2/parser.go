@@ -31,7 +31,7 @@ type availableFunc struct {
 
 // parse parses the formula in the astParser into a function that may be executed by passing a vars map into
 // it. If the parsing was not successful, an error is returned.
-func (p *astParser) parse() (eval func(vars vars) float64, err error) {
+func (p *astParser) parse() (eval func(vars vars) (float64, error), err error) {
 	expr, err := parser.ParseExpr(p.formula)
 	if err != nil {
 		return nil, fmt.Errorf("error parsing expression: %v", err)
@@ -42,7 +42,7 @@ func (p *astParser) parse() (eval func(vars vars) float64, err error) {
 // parseExpr parses the expression passed by checking what type it is and applying the correct parser. An
 // error is returned if the expression parsed returned one or if the expression was not one of the allowed
 // types.
-func (p *astParser) parseExpr(e ast.Expr) (eval func(vars vars) float64, err error) {
+func (p *astParser) parseExpr(e ast.Expr) (eval func(vars vars) (float64, error), err error) {
 	switch expr := e.(type) {
 	case *ast.BasicLit:
 		eval, err = p.parseBasicLit(expr)
@@ -63,7 +63,7 @@ func (p *astParser) parseExpr(e ast.Expr) (eval func(vars vars) float64, err err
 // parseBinaryExpr parses a binary expression. This is an expression that has an operator in it to add,
 // subtract, multiply etc. Each binary expression only has one operator and 2 expressions. The AST package
 // splits the formula up correctly itself.
-func (p *astParser) parseBinaryExpr(expr *ast.BinaryExpr) (eval func(vars vars) float64, err error) {
+func (p *astParser) parseBinaryExpr(expr *ast.BinaryExpr) (eval func(vars vars) (float64, error), err error) {
 	x, err := p.parseExpr(expr.X)
 	if err != nil {
 		return nil, fmt.Errorf("cannot parse binary expression X: %v", err)
@@ -75,24 +75,64 @@ func (p *astParser) parseBinaryExpr(expr *ast.BinaryExpr) (eval func(vars vars) 
 
 	switch expr.Op {
 	case token.ADD:
-		eval = func(vars vars) float64 {
-			return x(vars) + y(vars)
+		eval = func(vars vars) (float64, error) {
+			x, err := x(vars)
+			if err != nil {
+				return x, err
+			}
+			y, err := y(vars)
+			if err != nil {
+				return y, err
+			}
+			return x + y, nil
 		}
 	case token.SUB:
-		eval = func(vars vars) float64 {
-			return x(vars) - y(vars)
+		eval = func(vars vars) (float64, error) {
+			x, err := x(vars)
+			if err != nil {
+				return x, err
+			}
+			y, err := y(vars)
+			if err != nil {
+				return y, err
+			}
+			return x - y, nil
 		}
 	case token.MUL:
-		eval = func(vars vars) float64 {
-			return x(vars) * y(vars)
+		eval = func(vars vars) (float64, error) {
+			x, err := x(vars)
+			if err != nil {
+				return x, err
+			}
+			y, err := y(vars)
+			if err != nil {
+				return y, err
+			}
+			return x * y, nil
 		}
 	case token.QUO:
-		eval = func(vars vars) float64 {
-			return x(vars) / y(vars)
+		eval = func(vars vars) (float64, error) {
+			x, err := x(vars)
+			if err != nil {
+				return x, err
+			}
+			y, err := y(vars)
+			if err != nil {
+				return y, err
+			}
+			return x / y, nil
 		}
 	case token.REM:
-		eval = func(vars vars) float64 {
-			return math.Mod(x(vars), y(vars))
+		eval = func(vars vars) (float64, error) {
+			x, err := x(vars)
+			if err != nil {
+				return x, err
+			}
+			y, err := y(vars)
+			if err != nil {
+				return y, err
+			}
+			return math.Mod(x, y), nil
 		}
 	default:
 		return nil, fmt.Errorf("unknown mathematical operation '%v'", expr.Op)
@@ -102,7 +142,7 @@ func (p *astParser) parseBinaryExpr(expr *ast.BinaryExpr) (eval func(vars vars) 
 
 // parseBasicLit parses a basic literal, provided the literal is a numeric one, like a float or an integer.
 // Both integers and floats are parsed as a float64.
-func (p *astParser) parseBasicLit(lit *ast.BasicLit) (func(vars vars) float64, error) {
+func (p *astParser) parseBasicLit(lit *ast.BasicLit) (func(vars vars) (float64, error), error) {
 	switch lit.Kind {
 	case token.INT:
 		val, err := strconv.Atoi(lit.Value)
@@ -124,26 +164,31 @@ func (p *astParser) parseBasicLit(lit *ast.BasicLit) (func(vars vars) float64, e
 
 // parseIdent parses an identifier. (generally a variable that needs to be substituted with what is found in
 // the vars map passed)
-func (p *astParser) parseIdent(ident *ast.Ident) (func(vars vars) float64, error) {
-	return func(vars vars) float64 {
-		value, ok := vars[ident.Name]
+func (p *astParser) parseIdent(ident *ast.Ident) (func(vars vars) (float64, error), error) {
+	return func(vars vars) (float64, error) {
+		name := ident.Name
+		value, ok := vars[name]
 		if !ok {
-			return math.NaN()
+			err := &ErrUnknownVariable{
+				Var: name,
+				Pos: int(ident.NamePos) - 1,
+			}
+			return math.NaN(), err
 		}
-		return value
+		return value, nil
 	}, nil
 }
 
 // parseParenExpr parses an expression within parentheses and returns the function returned by the expression
 // within those parentheses.
-func (p *astParser) parseParenExpr(expr *ast.ParenExpr) (func(vars vars) float64, error) {
+func (p *astParser) parseParenExpr(expr *ast.ParenExpr) (func(vars vars) (float64, error), error) {
 	return p.parseExpr(expr.X)
 }
 
 // parseCallExpr parses a call expression. It parses all parameters inside of the function and evaluates them
 // when the function is evaluated.
-func (p *astParser) parseCallExpr(expr *ast.CallExpr) (func(vars vars) float64, error) {
-	args := make([]func(vars vars) float64, len(expr.Args))
+func (p *astParser) parseCallExpr(expr *ast.CallExpr) (func(vars vars) (float64, error), error) {
+	args := make([]func(vars vars) (float64, error), len(expr.Args))
 	for i, arg := range expr.Args {
 		f, err := p.parseExpr(arg)
 		if err != nil {
@@ -151,26 +196,41 @@ func (p *astParser) parseCallExpr(expr *ast.CallExpr) (func(vars vars) float64, 
 		}
 		args[i] = f
 	}
-	return func(vars vars) float64 {
-		f, ok := p.functions[expr.Fun.(*ast.Ident).Name]
+	return func(vars vars) (float64, error) {
+		funcName := expr.Fun.(*ast.Ident).Name
+		f, ok := p.functions[funcName]
 		if !ok {
-			return math.NaN()
+			err := &ErrUnknownFunc{
+				Func: funcName,
+				Pos:  int(expr.Lparen) - len(funcName) - 1,
+			}
+			return math.NaN(), err
 		}
 		if len(expr.Args) < f.paramCount {
 			// Too few arguments supplied to the function.
-			return math.NaN()
+			err := &ErrInsufficientArgs{
+				Func:     funcName,
+				Pos:      int(expr.Lparen) - len(funcName) - 1,
+				Actual:   len(expr.Args),
+				Expected: f.paramCount,
+			}
+			return math.NaN(), err
 		}
 		argValues := make([]float64, len(expr.Args))
 		for i, argValue := range args {
-			argValues[i] = argValue(vars)
+			av, err := argValue(vars)
+			if err != nil {
+				return av, err
+			}
+			argValues[i] = av
 		}
-		return f.function(argValues...)
+		return f.function(argValues...), nil
 	}, nil
 }
 
 // wrapFunc returns a function that wraps around the value passed and returns it.
-func wrapFunc(value float64) func(vars vars) float64 {
-	return func(vars vars) float64 {
-		return value
+func wrapFunc(value float64) func(vars vars) (float64, error) {
+	return func(vars vars) (float64, error) {
+		return value, nil
 	}
 }
