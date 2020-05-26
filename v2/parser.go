@@ -7,7 +7,9 @@ import (
 	"go/token"
 	"math"
 	"reflect"
+	"runtime"
 	"strconv"
+	"strings"
 )
 
 // astParser handles the parsing of the AST produced by parsing the formula passed into the astParser as an
@@ -196,8 +198,23 @@ func (p *astParser) parseCallExpr(expr *ast.CallExpr) (func(vars vars) (float64,
 		}
 		args[i] = f
 	}
-	return func(vars vars) (float64, error) {
+	return func(vars vars) (_ float64, rerr error) {
 		funcName := expr.Fun.(*ast.Ident).Name
+		// Catch panics within a registered function.
+		defer func() {
+			if r := recover(); r != nil {
+				_, f, line, _ := runtime.Caller(3)
+				err := &ErrPanic{
+					Func:   funcName,
+					Pos:    int(expr.Lparen) - len(funcName) - 1,
+					Reason: strings.TrimPrefix(fmt.Errorf("%v", r).Error(), "runtime error: "),
+					File:   f,
+					Line:   line,
+				}
+				rerr = err
+			}
+		}()
+
 		f, ok := p.functions[funcName]
 		if !ok {
 			err := &ErrUnknownFunc{
