@@ -4,6 +4,25 @@ import (
 	"fmt"
 )
 
+// ErrPanic is returned when a registered function panics.
+type ErrPanic struct {
+	// Func is the name of the function.
+	Func string
+	// Pos is the character position of Func.
+	Pos int
+	// Reason for panic.
+	Reason string
+	// Filename of where panic occurred.
+	File string
+	// Line number of where panic occurred.
+	Line int
+}
+
+// Error implements error.
+func (e *ErrPanic) Error() string {
+	return fmt.Sprintf("panic func: %s (pos:%d): %s [%s@L%d]", e.Func, e.Pos, e.Reason, e.File, e.Line)
+}
+
 // ErrInsufficientArgs is returned when a function in a formula requires more arguments than that provided.
 type ErrInsufficientArgs struct {
 	// Func is the name of the function.
