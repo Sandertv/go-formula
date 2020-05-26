@@ -207,7 +207,7 @@ func (p *astParser) parseCallExpr(expr *ast.CallExpr) (func(vars vars) (float64,
 				err := &ErrPanic{
 					Func:   funcName,
 					Pos:    int(expr.Lparen) - len(funcName) - 1,
-					Reason: strings.TrimPrefix(fmt.Errorf("%v", r).Error(), "runtime error: "),
+					Reason: strings.TrimPrefix(fmt.Sprintf("%v", r), "runtime error: "),
 					File:   f,
 					Line:   line,
 				}

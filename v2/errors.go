@@ -20,7 +20,7 @@ type ErrPanic struct {
 
 // Error implements error.
 func (e *ErrPanic) Error() string {
-	return fmt.Sprintf("panic func: %s (pos:%d): %s", e.Func, e.Pos, e.Reason)
+	return fmt.Sprintf("panic func: %s (pos:%d): %s [%s@L%d]", e.Func, e.Pos, e.Reason, e.File, e.Line)
 }
 
 // ErrInsufficientArgs is returned when a function in a formula requires more arguments than that provided.
